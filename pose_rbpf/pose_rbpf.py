@@ -21,6 +21,7 @@ import os
 from functools import partial
 import pickle
 from .sdf_optimizer import *
+import eigen
 from pyquaternion import Quaternion
 
 np.random.seed(0)
@@ -172,7 +173,7 @@ class PoseRBPF:
         self.gt_bbox_center = np.zeros((3,))
         self.gt_bbox_size = 0
         self.gt_uv = np.array([0, 0, 1], dtype=np.float32)
-        self.gt_z = 0
+        # self.gt_z = 0
 
         # estimated states
         self.est_bbox_center = np.zeros((2, self.cfg_list[0].PF.N_PROCESS))
@@ -205,19 +206,18 @@ class PoseRBPF:
         # flags for experiments
         self.exp_with_mask = True
         self.step = 0
-        self.iskf = False
         self.init_step = False
         self.save_uncertainty = False
         self.show_prior = False
 
         # motion model
-        self.T_c1c0 = np.eye(4, dtype=np.float32)
-        self.T_o0o1 = np.eye(4, dtype=np.float32)
-        self.T_c0o = np.eye(4, dtype=np.float32)
-        self.T_c1o = np.eye(4, dtype=np.float32)
-        self.Tbr1 = np.eye(4, dtype=np.float32)
-        self.Tbr0 = np.eye(4, dtype=np.float32)
-        self.Trc = np.eye(4, dtype=np.float32)
+        # self.T_c1c0 = np.eye(4, dtype=np.float32)
+        # self.T_o0o1 = np.eye(4, dtype=np.float32)
+        # self.T_c0o = np.eye(4, dtype=np.float32)
+        # self.T_c1o = np.eye(4, dtype=np.float32)
+        # self.Tbr1 = np.eye(4, dtype=np.float32)
+        # self.Tbr0 = np.eye(4, dtype=np.float32)
+        # self.Trc = np.eye(4, dtype=np.float32)
 
         # multiple object pose estimation (mope)
         self.mope_Tbo_list = []
@@ -373,13 +373,13 @@ class PoseRBPF:
         self.prior_R = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype=np.float32)
 
         # motion model
-        self.T_c1c0 = np.eye(4, dtype=np.float32)
-        self.T_o0o1 = np.eye(4, dtype=np.float32)
-        self.T_c0o = np.eye(4, dtype=np.float32)
-        self.T_c1o = np.eye(4, dtype=np.float32)
-        self.Tbr1 = np.eye(4, dtype=np.float32)
-        self.Tbr0 = np.eye(4, dtype=np.float32)
-        self.Trc = np.eye(4, dtype=np.float32)
+        # self.T_c1c0 = np.eye(4, dtype=np.float32)
+        # self.T_o0o1 = np.eye(4, dtype=np.float32)
+        # self.T_c0o = np.eye(4, dtype=np.float32)
+        # self.T_c1o = np.eye(4, dtype=np.float32)
+        # self.Tbr1 = np.eye(4, dtype=np.float32)
+        # self.Tbr0 = np.eye(4, dtype=np.float32)
+        # self.Trc = np.eye(4, dtype=np.float32)
 
         # print
         print('target object is set to {}'.format(self.target_obj_cfg.PF.TRACK_OBJ))
@@ -854,8 +854,8 @@ class PoseRBPF:
 
         # determine system failure
         self.rbpf.max_sim_all = max_sim_all
-        if max_sim_all < 0.6:
-            self.rbpf_ok = False
+        # if max_sim_all < 0.6:
+        #     self.rbpf_ok = False
 
         self.log_max_sim.append(max_sim_all)
 
@@ -939,20 +939,20 @@ class PoseRBPF:
     # filtering
     def process_poserbpf(self, image, intrinsics, depth=None, mask=None, apply_motion_prior=False, use_detection_prior=False):
         # propagation
-        if apply_motion_prior:
-            self.rbpf.propagate_particles(self.T_c1c0, self.T_o0o1, 0, 0, intrinsics)
-            uv_noise = self.target_obj_cfg.PF.UV_NOISE
-            z_noise = self.target_obj_cfg.PF.Z_NOISE
-            self.rbpf.add_noise_r3(uv_noise, z_noise)
-            self.rbpf.add_noise_rot()
-        else:
-            uv_noise = self.target_obj_cfg.PF.UV_NOISE
-            z_noise = self.target_obj_cfg.PF.Z_NOISE
-            self.rbpf.add_noise_r3(uv_noise, z_noise)
-            self.rbpf.add_noise_rot()
+        # if apply_motion_prior:
+        #     self.rbpf.propagate_particles(self.T_c1c0, self.T_o0o1, 0, 0, intrinsics)
+        #     uv_noise = self.target_obj_cfg.PF.UV_NOISE
+        #     z_noise = self.target_obj_cfg.PF.Z_NOISE
+        #     self.rbpf.add_noise_r3(uv_noise, z_noise)
+        #     self.rbpf.add_noise_rot()
+        # else:
+        uv_noise = self.target_obj_cfg.PF.UV_NOISE
+        z_noise = self.target_obj_cfg.PF.Z_NOISE
+        self.rbpf.add_noise_r3(uv_noise, z_noise)
+        self.rbpf.add_noise_rot()
 
-        if use_detection_prior:
-            self.use_detection_priors(int(self.rbpf.n_particles/2))
+        # if use_detection_prior:
+        #     self.use_detection_priors(int(self.rbpf.n_particles/2))
 
         # compute pdf matrix for each particle
         if self.modality == 'rgbd':
@@ -1009,9 +1009,9 @@ class PoseRBPF:
 
         return 0
 
-    def propagate_with_forward_kinematics(self, target_instance_idx):
-        self.switch_target_obj(target_instance_idx)
-        self.rbpf.propagate_particles(self.T_c1c0, self.T_o0o1, 0, 0, torch.from_numpy(self.intrinsics).unsqueeze(0))
+    # def propagate_with_forward_kinematics(self, target_instance_idx):
+    #     self.switch_target_obj(target_instance_idx)
+    #     self.rbpf.propagate_particles(self.T_c1c0, self.T_o0o1, 0, 0, torch.from_numpy(self.intrinsics).unsqueeze(0))
 
     # function used in ros node
     def pose_estimation_single(self, target_instance_idx, roi, image, depth, visualize=False, dry_run=False):
@@ -1277,6 +1277,9 @@ class PoseRBPF:
         return mask_viz
 
     def run_dataset(self, val_dataset, sequence, only_track_kf=False, kf_skip=1, demo=False):
+        #
+        only_track_kf = False
+        #
         self.log_err_r = []
         self.log_err_r_star = []
         self.log_err_t = []
@@ -1299,9 +1302,9 @@ class PoseRBPF:
                 center_posecnn, z_posecnn, t_posecnn, q_posecnn, masks = inputs
 
                 self.prior_uv = np.array([center_posecnn[0, 0], center_posecnn[0, 1], 1], dtype=np.float32)
-                self.prior_z = z_posecnn[0].numpy().astype(np.float32)
-                self.prior_t = t_posecnn[0].cpu().numpy()
-                self.prior_R = quat2mat(q_posecnn[0].cpu().numpy())
+                # self.prior_z = z_posecnn[0].numpy().astype(np.float32)
+                # self.prior_t = t_posecnn[0].cpu().numpy()
+                # self.prior_R = quat2mat(q_posecnn[0].cpu().numpy())
 
                 self.data_intrinsics = intrinsics[0].numpy()
                 self.intrinsics = intrinsics[0].numpy()
@@ -1322,61 +1325,20 @@ class PoseRBPF:
                     gt_center = gt_center[0]
                 gt_center = gt_center / gt_center[2]
                 self.gt_uv[:2] = gt_center[:2]
-                self.gt_z = self.gt_t[2]
-
-            elif val_dataset.dataset_type == 'tless':
-                images, depths, poses_gt, intrinsics, class_mask, \
-                file_name, is_kf, bbox = inputs
-
-                self.prior_uv = np.array([bbox[0, 0] + 0.5 * bbox[0, 2], bbox[0, 1] + 0.5 * bbox[0, 3], 1],
-                                         dtype=np.float32)
-
-                self.data_intrinsics = intrinsics[0].numpy()
-                self.intrinsics = intrinsics[0].numpy()
-                self.target_obj_cfg.PF.FU = self.intrinsics[0, 0]
-                self.target_obj_cfg.PF.FV = self.intrinsics[1, 1]
-                self.target_obj_cfg.PF.U0 = self.intrinsics[0, 2]
-                self.target_obj_cfg.PF.V0 = self.intrinsics[1, 2]
-                self.renderer.set_intrinsics(self.intrinsics, im_w=images.size(2), im_h=images.size(1))
-
-                self.data_with_est_center = True
-                self.data_with_gt = True
-
-                # ground truth for visualization
-                pose_gt = poses_gt.numpy()[0, :, :]
-                self.gt_t = pose_gt[:3, 3]
-                self.gt_rotm = pose_gt[:3, :3]
-                gt_center = np.matmul(intrinsics, self.gt_t)
-                if gt_center.shape[0] == 1:
-                    gt_center = gt_center[0]
-                gt_center = gt_center / gt_center[2]
-                self.gt_uv[:2] = gt_center[:2]
-                self.gt_z = self.gt_t[2]
-
-                is_kf = (step % 20 == 0)
             else:
                 print('*** INCORRECT DATASET SETTING! ***')
                 break
 
             self.step = step
-            self.iskf = is_kf
-
-            # skip kfs for larger baseline, motion model test
-            if only_track_kf:
-                if is_kf == 1:
-                    kf_step += 1
-                if is_kf == 0 or (kf_step+1) % kf_skip != 0:
-                    step += 1
-                    continue
 
             # motion prior
-            self.T_c1o[:3, :3] = self.gt_rotm
-            self.T_c1o[:3, 3] = self.gt_t
-            if np.linalg.norm(self.T_c0o[:3, 3]) == 0:
-                self.T_c1c0 = np.eye(4, dtype=np.float32)
-            else:
-                self.T_c1c0 = np.matmul(self.T_c1o, np.linalg.inv(self.T_c0o))
-            self.T_c0o = self.T_c1o.copy()
+            # self.T_c1o[:3, :3] = self.gt_rotm
+            # self.T_c1o[:3, 3] = self.gt_t
+            # if np.linalg.norm(self.T_c0o[:3, 3]) == 0:
+            #     self.T_c1c0 = np.eye(4, dtype=np.float32)
+            # else:
+            #     self.T_c1c0 = np.matmul(self.T_c1o, np.linalg.inv(self.T_c0o))
+            # self.T_c0o = self.T_c1o.copy()
 
             if self.modality == 'rgbd':
                 depth_data = depths[0]
@@ -1386,12 +1348,38 @@ class PoseRBPF:
             # initialization
             if step == 0 or self.rbpf_ok is False:
 
-                print('[Initialization] Initialize PoseRBPF with detected center ... ')
-                if np.linalg.norm(self.prior_uv[:2] - self.gt_uv[:2]) > 40:
-                    self.prior_uv[:2] = self.gt_uv[:2]
+                print('[Initialization] Initialize PoseRBPF with GT center ... ')
+
+                poses_gt_copy = poses_gt.clone()
+                poses_gt_copy[0][0, 3] += 0.05
+                poses_gt_copy[0][1, 3] += 0.05
+                poses_gt_copy[0][2, 3] += 0.05
+
+                m = poses_gt_copy[0][0:3, 0:3]
+                mEigen = eigen.Matrix3d(m)
+                euler = np.array(mEigen.eulerAngles(2, 1, 0))
+                euler += 10.0 * np.pi / 180.0
+                rot_z = Quaternion(axis = [0.0, 0.0, 1.0], angle = euler[0]).rotation_matrix
+                rot_y = Quaternion(axis = [0.0, 1.0, 0.0], angle = euler[1]).rotation_matrix
+                rot_x = Quaternion(axis = [1.0, 0.0, 0.0], angle = euler[2]).rotation_matrix
+                poses_gt_copy[0][0:3, 0:3] = torch.from_numpy(rot_z @ rot_y @ rot_x)
+
+                pose_gt_copy = poses_gt_copy.numpy()[0, :, :]
+                gt_t_copy = pose_gt_copy[:3, 3]
+                gt_rotm_copy = pose_gt_copy[:3, :3]
+                gt_center_copy = np.matmul(intrinsics, gt_t_copy)
+                if gt_center_copy.shape[0] == 1:
+                    gt_center_copy = gt_center_copy[0]
+                gt_center_copy = gt_center_copy / gt_center_copy[2]
+                gt_uv_copy = self.gt_uv.copy()
+                gt_uv_copy[:2] = gt_center_copy[:2]
+
+                print(self.prior_uv[:2])
+                print(self.gt_uv[:2])
+                print(gt_uv_copy[:2])
 
                 self.initialize_poserbpf(images[0].detach(), self.data_intrinsics,
-                                         self.prior_uv[:2], self.target_obj_cfg.PF.N_INIT,
+                                         gt_uv_copy[:2], self.target_obj_cfg.PF.N_INIT,
                                          depth=depth_data)
 
                 if self.data_with_gt:
@@ -1403,8 +1391,8 @@ class PoseRBPF:
                 self.rbpf_ok = True
 
                 # to avoid initialization to symmetric view and cause abnormal ADD results
-                if self.obj_ctg == 'ycb' and init_rot_error * 57.3 > 60:
-                    self.rbpf_ok = False
+                # if self.obj_ctg == 'ycb' and init_rot_error * 57.3 > 60:
+                #     self.rbpf_ok = False
 
             # filtering
             if self.rbpf_ok:
@@ -1412,8 +1400,8 @@ class PoseRBPF:
                 time_start = time.time()
                 self.process_poserbpf(images[0], intrinsics, depth=depth_data)
 
-                if self.refine:
-                    self.pose_refine(depth_data.float(), 50)
+                # if self.refine:
+                #     self.pose_refine(depth_data.float(), 50)
 
                 torch.cuda.synchronize()
                 time_elapse = time.time() - time_start
@@ -1424,30 +1412,20 @@ class PoseRBPF:
                     self.display_result(step, steps)
                     self.save_log(sequence, file_name, tless=(self.obj_ctg == 'tless'))
 
-                    # visualization
-                    if demo:
-                        image_disp = images[0].float().numpy()
-                        image_est_render, _ = self.renderer.render_pose(self.intrinsics,
-                                                                        self.rbpf.trans_bar,
-                                                                        self.rbpf.rot_bar,
-                                                                        self.target_obj_idx)
-                        image_est_disp = image_est_render[0].permute(1, 2, 0).cpu().numpy()
-                        image_disp = 0.4 * image_disp + 0.6 * image_est_disp
-                        cv2.imshow('show tracking', cv2.cvtColor(image_disp, cv2.COLOR_RGB2BGR))
-                        cv2.waitKey(10)
-                    elif is_kf:
-                        image_disp = images[0].float().numpy()
+                if is_kf:
+                    image_disp = images[0].float().numpy()
 
-                        image_est_render, _ = self.renderer.render_pose(self.intrinsics,
-                                                                         self.rbpf.trans_bar,
-                                                                         self.rbpf.rot_bar,
-                                                                         self.target_obj_idx)
+                    image_est_render, _ = self.renderer.render_pose(self.intrinsics,
+                                                                    self.rbpf.trans_bar,
+                                                                    self.rbpf.rot_bar,
+                                                                    self.target_obj_idx)
 
-                        image_est_disp = image_est_render[0].permute(1, 2, 0).cpu().numpy()
+                    image_est_disp = image_est_render[0].permute(1, 2, 0).cpu().numpy()
 
-                        image_disp = 0.4 * image_disp + 0.6 * image_est_disp
-                        self.visualize_roi(image_disp, self.rbpf.uv, self.rbpf.z, step, error=False, uncertainty=self.show_prior)
-                        plt.close()
+                    image_disp = 0.4 * image_disp + 0.6 * image_est_disp
+                    self.visualize_roi(image_disp, self.rbpf.uv, self.rbpf.z, step, error=False, uncertainty=self.show_prior)
+                    plt.close()
+
 
             if step == steps-1:
                 break
