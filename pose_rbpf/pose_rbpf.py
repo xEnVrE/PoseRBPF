@@ -21,6 +21,9 @@ import os
 from functools import partial
 import pickle
 from .sdf_optimizer import *
+from pyquaternion import Quaternion
+
+np.random.seed(0)
 
 class PoseRBPF:
     def __init__(self, obj_list, cfg_list, ckpt_list, codebook_list, obj_ctg, modality, cad_model_dir, visualize=True, refine=False, gpu_id=0):

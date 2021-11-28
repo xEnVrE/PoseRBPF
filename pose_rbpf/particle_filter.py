@@ -9,6 +9,10 @@ import torch.nn as nn
 import scipy.stats as sci_stats
 import time
 import matplotlib.pyplot as plt
+import numpy
+
+torch.manual_seed(0)
+numpy.random.seed(0)
 
 class particle_filter():
     def __init__(self, cfg_pf, n_particles=100, resample_method='systematic'):

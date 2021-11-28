@@ -22,6 +22,9 @@ from config.config import cfg
 from collections import OrderedDict
 from utils.RoIAlign.layer_utils.roi_layers import ROIAlign
 
+torch.manual_seed(0)
+np.random.seed(0)
+
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '*'):
     """
     Call in a loop to create terminal progress bar

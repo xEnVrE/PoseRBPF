@@ -8,6 +8,10 @@ from utils.poserbpf_utils import *
 import numpy.ma as ma
 import matplotlib.pyplot as plt
 import time
+import numpy
+
+numpy.random.seed(0)
+
 
 class render_wrapper:
     def __init__(self, models, intrinsics, gpu_id, model_dir, model_ctg='ycb', im_w=640, im_h=480, initialize_render=True):

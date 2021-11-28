@@ -15,6 +15,8 @@ import torch.nn.functional as F
 import time
 from utils.sdf_layer.sdf_matching_loss import *
 
+torch.manual_seed(0)
+np.random.seed(0)
 
 def load_sdf(sdf_file, into_gpu=True):
 
